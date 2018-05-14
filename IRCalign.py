@@ -1,6 +1,21 @@
 #!/usr/bin/env python 
 __version__= '0.0.0'
 
+
+#Periodic table
+
+periodic_table = ["","H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr","Rb","Sr","Y","Zr",
+    "Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl",
+    "Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub","Uut","Uuq","Uup","Uuh","Uus","Uuo"]
+
+#Atomic mass according to CIAAW http://www.ciaaw.org/, in case of ranges the values which are used in Gaussian09 Rev.D.01 are taken.
+
+atomic_mass = [0.0000,1.0078,4.0026,"Li",9.0122,"B","C","N","O",18.998,20.180,22.990,"Mg",26.982,"Si",30.974,"S","Cl",39.948,39.098,40.078, 44.956,47.867,50.941,51.996,54.938,55.845,58.933,58.693,63.546,65.38,69.723,72.630,74.922,"Se","Br","Kr","Rb","Sr","Y","Zr",
+    "Nb","Mo","Tc","Ru",102.91,106.42,107.87,"Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl",
+    "Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub","Uut","Uuq","Uup","Uuh","Uus","Uuo"]
+
+
+
 #function to get xyz coordinates out of *.log or *.xyz files
 def get_xyz():
 
@@ -44,6 +59,15 @@ def main():
 	Assume right direction of IRCs (make function that reverses IRCs!) 
 	This means the last point of IRC1 is the reference
 	This means the first point of IRC2 is used for calculating the rotational matrix!
+	
+	
+	
+	Arguments:
+	
+    mass weight vs centroid
+	include H or not
+	reverse IRC1 
+	reverse IRC2
 	"""
 	parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description='description')
 	
