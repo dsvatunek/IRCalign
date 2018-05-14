@@ -40,18 +40,36 @@ def xyz_from_xyz(file):
 	for line in input:
 		if isInt(line.strip()):
 			n_atoms=int(line)
-			print('number of atoms is: ' + str(n_atoms))
-			break
+			break	
+	else: #exits if no line with number of atoms was found
+		exit('No xyz coordinates found in file: ' + file)
 			
 	#skip one line
 	input.readline()
-	print(input.readline().split())
-	print(input.readline())
-	print(input.readline())
 	
-	# now there should be n_atoms lines of coordinates
+	# now there should be n_atoms lines of coordinates WHAT IF NOT???
+	for i in range(n_atoms):
+		l=input.readline().split()
+		
+		atoms.append(l[0]) #get atom symbol and append to atom list
+		
+		coords=[float(x) for x in l[1:]] #convert line to list of floats
+		coords=np.array([coords]) #create array with coords
+		try: #try append, doesn't work if XYZ doesn't exist yet
+			XYZ=np.concatenate((XYZ,coords), axis=0)
+		except NameError:
+			XYZ=coords
+			
+			
+	structures.append(XYZ) #append first structure to structures list
+	del XYZ #get rid of that for the next structure
 	
-
+	
+	#now search for more structures
+	
+	
+		
+	
 	return structures, n_atoms, atoms
 	
 #function to reverse order of IRC1
