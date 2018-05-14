@@ -77,9 +77,19 @@ def reverse_IRC(list):
 	list.reverse()
 	return list
 
-#function that centers xyz structure by center of mass or centroid, takes structure and center of mass or centroid position and returns centered structure
-def center_xyz(structure, center):
+#function that centers xyz structure by center of mass or centroid, takes structure and mode of centering and returns centered structure
+def center_xyz(structure, mode):
 	
+	#first calculate translation vector V by calculating center and reversing the vector
+	if mode == 'c':
+		V=-1*find_centroid(structure)
+	elif mode == 'm':
+		V=-1*find_centerofmass(structure)
+	else:
+		exit('something went wrong')
+	
+	#now add vector to each atom
+	structure=structure+V
 	return structure
 
 #function that finds center of mass
