@@ -1,6 +1,7 @@
 #!/usr/bin/env python 
 __version__= '0.0.0'
 
+import numpy as np
 
 #Periodic table
 
@@ -16,10 +17,42 @@ atomic_mass = [0.0000,1.0078,4.0026,"Li",9.0122,"B","C","N","O",18.998,20.180,22
 
 
 
-#function to get xyz coordinates out of *.log or *.xyz files
+#function to get xyz coordinates and atom list out of *.log or *.xyz files
 def get_xyz():
 
 	return
+
+#checks if a string contains only an integer
+def isInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False	
+	
+#gets xyz structures from xyz file and provides a list of numpy arrays with xyz data of each structure, number of atoms and an atom list 
+def xyz_from_xyz(file):
+	n_atoms = 0
+	atoms = []
+	structures = []
+	input = open(file, 'r')
+	#search for number of atoms
+	for line in input:
+		if isInt(line.strip()):
+			n_atoms=int(line)
+			print('number of atoms is: ' + str(n_atoms))
+			break
+			
+	#skip one line
+	input.readline()
+	print(input.readline().split())
+	print(input.readline())
+	print(input.readline())
+	
+	# now there should be n_atoms lines of coordinates
+	
+
+	return structures, n_atoms, atoms
 	
 #function to reverse order of IRC1
 def reverse_IRC():
