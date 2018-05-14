@@ -72,10 +72,10 @@ def xyz_from_xyz(file):
 	
 	return structures, n_atoms, atoms
 	
-#function to reverse order of IRC1
-def reverse_IRC():
-
-	return
+#function to reverse order of IRC, takes list of numpy arrays and reverses them
+def reverse_IRC(list):
+	list.reverse()
+	return list
 
 #function that centers xyz structure by center of mass or centroid, takes structure and center of mass or centroid position and returns centered structure
 def center_xyz(structure, center):
@@ -87,10 +87,10 @@ def find_centerofmass():
 
 	return
 
-#function that finds centroid
-def find_centroid():
-
-	return
+#function that finds centroid from numpy array, returns numpy array with position of centroid
+def find_centroid(P):
+	C=P.mean(axis=0)
+	return C
 
 	
 #function that calculates RMSD between two xyz structures
