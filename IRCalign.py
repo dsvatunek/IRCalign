@@ -9,12 +9,20 @@ periodic_table = ["","H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al",
     "Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl",
     "Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub","Uut","Uuq","Uup","Uuh","Uus","Uuo"]
 
-#Atomic mass according to CIAAW http://www.ciaaw.org/, in case of ranges the values which are used in Gaussian09 Rev.D.01 are taken.
+#Atomic mass according to CIAAW http://www.ciaaw.org/ for most common isotope, checked up to O
 
-atomic_mass = [0.0000,1.0078,4.0026,"Li",9.0122,"B","C","N","O",18.998,20.180,22.990,"Mg",26.982,"Si",30.974,"S","Cl",39.948,39.098,40.078, 44.956,47.867,50.941,51.996,54.938,55.845,58.933,58.693,63.546,65.38,69.723,72.630,74.922,"Se","Br","Kr","Rb","Sr","Y","Zr",
+atomic_mass = [0.0000,1.0078,4.0026,7.0160,9.0122,11.009,12.000,14.003,15.995,18.998,20.180,22.990,"Mg",26.982,27.977,30.974,"S","Cl",39.948,39.098,40.078, 44.956,47.867,50.941,51.996,54.938,55.845,58.933,58.693,63.546,65.38,69.723,72.630,74.922,"Se","Br","Kr","Rb","Sr","Y","Zr",
     "Nb","Mo","Tc","Ru",102.91,106.42,107.87,"Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl",
     "Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub","Uut","Uuq","Uup","Uuh","Uus","Uuo"]
 
+	
+#get mass of molecule from atom list and also returns a list with masses of each atom for mass weighted centering
+def get_mass(atoms):
+	mass_list =[]
+	for item in atoms:
+		mass_list.append(atomic_mass[periodic_table.index(item)])
+	mass=sum(mass_list)
+	return mass, mass_list
 
 
 #function to get xyz coordinates and atom list out of *.log or *.xyz files
@@ -78,13 +86,13 @@ def reverse_IRC(list):
 	return list
 
 #function that centers xyz structure by center of mass or centroid, takes structure and mode of centering and returns centered structure
-def center_xyz(structure, mode):
+def center_xyz(structure, atoms, mode):
 	
 	#first calculate translation vector V by calculating center and reversing the vector
 	if mode == 'c':
 		V=-1*find_centroid(structure)
 	elif mode == 'm':
-		V=-1*find_centerofmass(structure)
+		V=-1*find_centerofmass(structure, atoms)
 	else:
 		exit('something went wrong')
 	
@@ -92,10 +100,21 @@ def center_xyz(structure, mode):
 	structure=structure+V
 	return structure
 
-#function that finds center of mass
-def find_centerofmass():
-
-	return
+#function that finds center of mass, input is geometry P and atom list
+def find_centerofmass(P, atoms):
+	
+	#first get mass of molecule and mass list
+	mass,mass_list=get_mass(atoms)
+	#now multiply each line by it's mass
+	for i in range(len(mass_list)):
+		print(i)
+		P[i,:] *=mass_list[i]	
+	print(P)
+	C=P.mean(axis=0)
+	print(C)
+	C[:]=C[:]/mass
+	print(C)
+	return C
 
 #function that finds centroid from numpy array, returns numpy array with position of centroid
 def find_centroid(P):
