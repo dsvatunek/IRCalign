@@ -138,10 +138,14 @@ def find_centroid(P):
 	return C
 
 	
-#function that calculates RMSD between two xyz structures
-def RMSD():
+#function that calculates RMSD between two xyz structures, takes structures as (m*3) numpy array
+def RMSD(A, B):
+	RMSD=0.0
+	for i in range(3):
+		for x in range(len(A)):
+			RMSD += (A[x,i]-B[x,i])**2
 	
-	return
+	return np.sqrt(RMSD/len(A))
 
 	
 
