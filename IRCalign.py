@@ -1,5 +1,5 @@
 #!/usr/bin/env python 
-__version__= '0.0.0'
+__version__= '0.1.0'
 
 import numpy as np
 import copy
@@ -27,10 +27,10 @@ def get_mass(atoms):
 	return mass, mass_list
 
 
-#function to get xyz coordinates and atom list out of *.log or *.xyz files
-def get_xyz():
-
-	return
+#function to get xyz coordinates and atom list out of *.log or *.xyz files, right now only xyz
+def get_xyz(file):
+	structures,n_atoms,atoms=xyz_from_xyz(file)
+	return structures, n_atoms, atoms
 
 #checks if a string contains only an integer
 def isInt(s):
@@ -139,15 +139,53 @@ def find_centroid(P):
 
 	
 #function that calculates RMSD between two xyz structures, takes structures as (m*3) numpy array
-def RMSD(A, B):
+def calc_RMSD(A, B):
 	RMSD=0.0
 	for i in range(3):
 		for x in range(len(A)):
 			RMSD += (A[x,i]-B[x,i])**2
-	
 	return np.sqrt(RMSD/len(A))
 
+	#takes structure A and reference structure R, calculates optimal rotation (R) using SVD for alignment based on Kabsch algorithm!
+def find_rotation(A, R):
+	# Computation of the covariance matrix
+	C = np.dot(np.transpose(A), R)
 	
+	u, s, vh = np.linalg.svd(C)
+	
+	#assure right handed coordinate system)
+	if (np.linalg.det(u) * np.linalg.det(vh)) < 0.0:
+		s[-1] = -s[-1]
+		u[:, -1] = -u[:, -1]
+	
+	#calculate rotation R
+	rot = np.dot(u, vh)
+		
+	return rot
+	
+# rotates structure, takes strcuture A and rotation R, returns rotated structure B
+def rotate(A, rot):
+	B=np.dot(A, rot)
+	return B
+
+# does partial procrustes analysis, takes structure A and reference R and returns RMSD
+def procrustes(A, R):
+	rot=find_rotation(A, R)
+	#calculates rotated structure B
+	B=rotate(A, rot)
+	RMSD=calc_RMSD(B,R)
+	return RMSD
+	
+#appends structure to file
+def print_xyz(A, atoms, file):
+	
+	file.write(str(len(atoms))+ "\n\n")
+	for i in range(len(A)):
+		file.write("{0:2s} {1:15.12f} {2:15.12f} {3:15.12f}\n".format(atoms[i], A[i, 0], A[i, 1], A[i, 2]))
+		
+	return
+	
+
 
 def main():
 	
@@ -169,26 +207,86 @@ def main():
 	reverse IRC1 
 	reverse IRC2
 	"""
-	parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description='description')
+	#parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description='description')
+	#args = parser.parse_args()
 	
 	
-	args = parser.parse_args()
+	#HARDCODE FOR TESTING
+	
+	center_mode='c'
+	irc1='irc.xyz'
+	irc2='test.xyz'
+	
+	
 	
 	#get structures from IRC1
+	structures_irc1,n_atoms_irc1,atoms_irc1=get_xyz(irc1)
 	
 	#get structures from IRC2
+	structures_irc2,n_atoms_irc2,atoms_irc2=get_xyz(irc2)
+	
+	#check if IRCs are compatible
+	if atoms_irc1 == atoms_irc2:
+		pass
+	else:
+		exit('Error: Structures don\'t match between IRCs')
 	
 	# Translate all structures according to either center of mass or centroid
+	for i in range(len(structures_irc1)):
+		structures_irc1[i]=center_xyz(structures_irc1[i], atoms_irc1, center_mode)
 	
-	# grep last structure of IRC1
-	# grep first structure of IRC2
+	for i in range(len(structures_irc2)):
+		structures_irc2[i]=center_xyz(structures_irc2[i], atoms_irc1, center_mode)
+		
+	""" 
+	find out orientation of IRCs automatically by
+	checking all 4 different possibilities	
+	and reversing IRCs if necessary
+	"""
+	
+	rmsd1=procrustes(structures_irc1[0], structures_irc2[0])
+	print('rmsd1=' +  str(rmsd1))
+	rmsd2=procrustes(structures_irc1[-1], structures_irc2[0])
+	print('rmsd2=' +  str(rmsd2))
+	rmsd3=procrustes(structures_irc1[0], structures_irc2[-1])
+	print('rmsd3=' +  str(rmsd3))
+	rmsd4=procrustes(structures_irc1[-1], structures_irc2[-1])
+	print('rmsd4=' +  str(rmsd4))
+	
+	if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
+		structures_irc1=reverse(structures_irc1)		
+		print('Reversed IRC1')
+	elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
+		pass		
+	elif rmsd3 < rmsd1 and rmsd2 < rmsd2 and rmsd3 < rmsd4:
+		structures_irc1=reverse(structures_irc1)
+		structures_irc2=reverse(structures_irc2)
+		print('Reversed IRC1 and IRC2')		
+	elif rmsd4 < rmsd1 and rmsd2 < rmsd2 and rmsd4 < rmsd3:
+		structures_irc2=reverse(structures_irc2)
+		print('Reversed IRC2')			
+	else:
+		print('Warning: Was not able to find correct orientation of IRCs, assuming there are correctly aligned!')
 	
 	# Calculate rotational matrix
+	rot=find_rotation(structures_irc2[0],structures_irc1[-1])
 	
 	# Apply rotation to all structures in IRC2
+	for i in range(len(structures_irc2)):
+		structures_irc2[i]=rotate(structures_irc2[i],rot)
 	
 	# Print one file with translated IRC1 and translated and rotated IRC2 structures
-	
+	output = open(irc1 + '_' + irc2 + '.xyz','w')
+
+	#print IRC1
+	for i in range(len(structures_irc1)):
+		print_xyz(structures_irc1[i],atoms_irc1, output)
+	#print IRC2
+	for i in range(len(structures_irc2)):
+		print_xyz(structures_irc2[i],atoms_irc2, output)
+	#close file
+	output.close
+		
 	
 	return
 
