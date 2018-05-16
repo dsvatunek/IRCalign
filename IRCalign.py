@@ -110,11 +110,8 @@ def find_centerofmass(P, atoms):
 	#now multiply each line by it's mass
 	for i in range(len(mass_list)):
 		S[i,:] *=mass_list[i]	
-	print(S)
 	C=S.mean(axis=0)
-	print(C)
 	C[:]=C[:]/(mass/len(mass_list))
-	print(C)
 	return C
 
 #function that finds centroid from numpy array, returns numpy array with position of centroid
