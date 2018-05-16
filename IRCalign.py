@@ -2,6 +2,7 @@
 __version__= '0.0.0'
 
 import numpy as np
+import copy
 
 #Periodic table
 
@@ -21,6 +22,7 @@ def get_mass(atoms):
 	mass_list =[]
 	for item in atoms:
 		mass_list.append(atomic_mass[periodic_table.index(item)])
+	print(mass_list)
 	mass=sum(mass_list)
 	return mass, mass_list
 
@@ -102,17 +104,16 @@ def center_xyz(structure, atoms, mode):
 
 #function that finds center of mass, input is geometry P and atom list
 def find_centerofmass(P, atoms):
-	
+	S=copy.deepcopy(P)
 	#first get mass of molecule and mass list
 	mass,mass_list=get_mass(atoms)
 	#now multiply each line by it's mass
 	for i in range(len(mass_list)):
-		print(i)
-		P[i,:] *=mass_list[i]	
-	print(P)
-	C=P.mean(axis=0)
+		S[i,:] *=mass_list[i]	
+	print(S)
+	C=S.mean(axis=0)
 	print(C)
-	C[:]=C[:]/mass
+	C[:]=C[:]/(mass/len(mass_list))
 	print(C)
 	return C
 
