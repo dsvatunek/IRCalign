@@ -10,9 +10,9 @@ periodic_table = ["","H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al",
     "Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl",
     "Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub","Uut","Uuq","Uup","Uuh","Uus","Uuo"]
 
-#Atomic mass according to CIAAW http://www.ciaaw.org/ for most common isotope, checked up to O
+#Atomic mass according to CIAAW http://www.ciaaw.org/ for most common isotope, checked up to Rb
 
-atomic_mass = [0.0000,1.0078,4.0026,7.0160,9.0122,11.009,12.000,14.003,15.995,18.998,20.180,22.990,"Mg",26.982,27.977,30.974,"S","Cl",39.948,39.098,40.078, 44.956,47.867,50.941,51.996,54.938,55.845,58.933,58.693,63.546,65.38,69.723,72.630,74.922,"Se","Br","Kr","Rb","Sr","Y","Zr",
+atomic_mass = [0.0000,1.0078,4.0026,7.0160,9.0122,11.009,12.000,14.003,15.995,18.998,19.992,22.990,23.985,26.982,27.977,30.974,31.972,34.969,39.962,38.963,39.962,44.956,47.948,50.944,51.941,54.938,55.935,58.933,57.935,62.930,63.929,68.926,73.921,74.922,79.917,78.918,83.911,"Rb","Sr","Y","Zr",
     "Nb","Mo","Tc","Ru",102.91,106.42,107.87,"Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl",
     "Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Uub","Uut","Uuq","Uup","Uuh","Uus","Uuo"]
 
@@ -52,7 +52,7 @@ def xyz_from_xyz(file):
 			n_atoms=int(line)
 			break	
 	else: #exits if no line with number of atoms was found
-		exit('No xyz coordinates found in file: ' + file)
+		exit('Error: No xyz coordinates found in file: ' + file)
 			
 	#skip one line
 	input.readline()
@@ -61,25 +61,43 @@ def xyz_from_xyz(file):
 	for i in range(n_atoms):
 		l=input.readline().split()
 		
-		atoms.append(l[0]) #get atom symbol and append to atom list
-		
+		if l[0] in periodic_table:
+			atoms.append(l[0]) #get atom symbol and append to atom list
+		else:
+			exit('Error: something is wrong with the first structure in file: '+file)
 		coords=[float(x) for x in l[1:]] #convert line to list of floats
 		coords=np.array([coords]) #create array with coords
 		try: #try append, doesn't work if XYZ doesn't exist yet
 			XYZ=np.concatenate((XYZ,coords), axis=0)
 		except NameError:
 			XYZ=coords
-			
-			
+				
 	structures.append(XYZ) #append first structure to structures list
 	del XYZ #get rid of that for the next structure
-	
-	
+		
 	#now search for more structures
 	
-	
-		
-	
+	for line in input:
+		#start extracting if atom number line is found
+		try:
+			if int(line.strip()) == n_atoms:
+				#read one line to skip title
+				input.readline()
+				
+				# now there should be n_atoms lines of coordinates WHAT IF NOT???
+				for i in range(n_atoms):
+					l=input.readline().split()
+					coords=[float(x) for x in l[1:]]
+					coords=np.array([coords])
+					try: #try append, doesn't work if XYZ doesn't exist yet
+						XYZ=np.concatenate((XYZ,coords), axis=0)
+					except NameError:
+						XYZ=coords
+				structures.append(XYZ)
+				del XYZ
+		except ValueError:
+			pass
+				
 	return structures, n_atoms, atoms
 	
 #function to reverse order of IRC, takes list of numpy arrays and reverses them
