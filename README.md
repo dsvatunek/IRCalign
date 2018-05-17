@@ -72,9 +72,8 @@ TU Wien
 
 dennis.svatunek@gmail.com
 
+@Click_Chemist
+
 https://github.com/dsvatunek/IRCalign
 
 _____________________________
-
-
-License: [CC-BY](https://creativecommons.org/licenses/by/3.0/)
