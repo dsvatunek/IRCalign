@@ -57,10 +57,9 @@ def xyz_from_xyz(file):
 	file_object = open(file, 'r')
 	input = (line for line in file_object) #make generator
 	#search for number of atoms
-	while True:
-		y=next(input)
-		if isInt(y.strip()):
-			n_atoms=int(y)
+	for line in input:
+		if isInt(line.strip()):
+			n_atoms=int(line)
 			break	
 	else: #exits if no line with number of atoms was found
 		sys.exit('Error: No xyz coordinates found in file: ' + file)
