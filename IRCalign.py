@@ -54,10 +54,11 @@ def xyz_from_xyz(file):
 	n_atoms = 0
 	atoms = []
 	structures = []
-	input = open(file, 'r')
+	file_object = open(file, 'r')
+	input = (line for line in file_object) #make generator
 	#search for number of atoms
 	while True:
-		y=input.readline()
+		y=next(input)
 		if isInt(y.strip()):
 			n_atoms=int(y)
 			break	
@@ -65,11 +66,11 @@ def xyz_from_xyz(file):
 		sys.exit('Error: No xyz coordinates found in file: ' + file)
 			
 	#skip one line
-	input.readline()
+	next(input)
 	
 	# now there should be n_atoms lines of coordinates WHAT IF NOT???
 	for i in range(n_atoms):
-		l=input.readline().split()
+		l=next(input).split()
 		
 		if l[0] in periodic_table:
 			atoms.append(l[0]) #get atom symbol and append to atom list
@@ -92,11 +93,11 @@ def xyz_from_xyz(file):
 		try:
 			if int(line.strip()) == n_atoms:
 				#read one line to skip title
-				input.readline()
+				next(input)
 				
 				# now there should be n_atoms lines of coordinates WHAT IF NOT???
 				for i in range(n_atoms):
-					l=input.readline().split()
+					l=next(input).split()
 					coords=[float(x) for x in l[1:]]
 					coords=np.array([coords])
 					try: #try append, doesn't work if XYZ doesn't exist yet
@@ -229,7 +230,7 @@ def main():
 	
 	
 	parser.add_argument('irc1', metavar='IRC_1', type=str, help='IRC1 as .xyz')
-	parser.add_argument('irc2', metavar='IRC_2', type=str, help='IRC2 as .xyz')
+	parser.add_argument('irc2', metavar='IRC_2', nargs="+", type=str, help='additional IRCs as .xyz')
 	parser.add_argument('-m', '--mass', action='store_true', help='Mass center', default=False)
 	parser.add_argument('-o', '--orient', action='store_true', help='Auto orient', default=False)
 	parser.add_argument('-d', '--duplicate', action='store_true', help='Remove duplicates', default=False)
@@ -256,7 +257,7 @@ def main():
 	structures_irc1,n_atoms_irc1,atoms_irc1=get_xyz(args.irc1)
 	
 	#get structures from IRC2
-	structures_irc2,n_atoms_irc2,atoms_irc2=get_xyz(args.irc2)
+	structures_irc2,n_atoms_irc2,atoms_irc2=get_xyz(args.irc2[0])
 	
 	#check if IRCs are compatible
 	if atoms_irc1 == atoms_irc2:
@@ -314,7 +315,7 @@ def main():
 	if args.name:
 		output = open(args.name + '.xyz','w')	
 	else:
-		output = open(args.irc1[:-4] + '_' + args.irc2[:-4] + '.xyz','w')
+		output = open(args.irc1[:-4] + '_' + args.irc2[0][:-4] + '.xyz','w')
 
 	#print IRC1
 	count=1
