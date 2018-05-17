@@ -56,9 +56,10 @@ def xyz_from_xyz(file):
 	structures = []
 	input = open(file, 'r')
 	#search for number of atoms
-	for line in input:
-		if isInt(line.strip()):
-			n_atoms=int(line)
+	while True:
+		y=input.readline()
+		if isInt(y.strip()):
+			n_atoms=int(y)
 			break	
 	else: #exits if no line with number of atoms was found
 		sys.exit('Error: No xyz coordinates found in file: ' + file)
