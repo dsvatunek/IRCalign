@@ -1,5 +1,9 @@
 #!/usr/bin/env python 
-__version__= '0.2.0'
+__version__= '0.3.0'
+
+__doc__="""
+Documentation
+"""
 
 import numpy as np
 import copy
@@ -57,7 +61,7 @@ def xyz_from_xyz(file):
 			n_atoms=int(line)
 			break	
 	else: #exits if no line with number of atoms was found
-		exit('Error: No xyz coordinates found in file: ' + file)
+		sys.exit('Error: No xyz coordinates found in file: ' + file)
 			
 	#skip one line
 	input.readline()
@@ -69,7 +73,7 @@ def xyz_from_xyz(file):
 		if l[0] in periodic_table:
 			atoms.append(l[0]) #get atom symbol and append to atom list
 		else:
-			exit('Error: something is wrong with the first structure in file: '+file)
+			sys.exit('Error: something is wrong with the first structure in file: '+file)
 		coords=[float(x) for x in l[1:]] #convert line to list of floats
 		coords=np.array([coords]) #create array with coords
 		try: #try append, doesn't work if XYZ doesn't exist yet
@@ -119,7 +123,7 @@ def center_xyz(structure, atoms, mode):
 	elif mode == 'm':
 		V=-1*find_centerofmass(structure, atoms)
 	else:
-		exit('something went wrong')
+		sys.exit('something went wrong')
 	
 	#now add vector to each atom
 	structure=structure+V
@@ -206,20 +210,34 @@ def main():
 	
 	#set standard settings
 	
+	description="""
+	Description will be put here
+	"""
+	
+	epilog="""
+	Epilog will be put here
+	"""
+	
+	
 	center_mode='c'
 	remove_duplicates= False
 	auto_orient = False
 	
 	
-	parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description='description')
+	parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description=description, epilog=epilog)
 	
 	
-		parser.add_argument('irc1', metavar='IRC_1', type=str, help='IRC1 as .xyz')
+	parser.add_argument('irc1', metavar='IRC_1', type=str, help='IRC1 as .xyz')
 	parser.add_argument('irc2', metavar='IRC_2', type=str, help='IRC2 as .xyz')
 	parser.add_argument('-m', '--mass', action='store_true', help='Mass center', default=False)
 	parser.add_argument('-o', '--orient', action='store_true', help='Auto orient', default=False)
 	parser.add_argument('-d', '--duplicate', action='store_true', help='Remove duplicates', default=False)
+	parser.add_argument('-n', '--name', type=str, help='Specify output filename', default=False)
 	
+	
+	if len(sys.argv) == 1:
+		parser.print_help()
+		sys.exit(1)
 	
 	#actually parses the arguments
 	args = parser.parse_args()
@@ -227,11 +245,11 @@ def main():
 	if args.mass:
 		center_mode='m'
 		
-	if not args.orient:
-		auto_orient=False
+	if args.orient:
+		auto_orient=True
 		
-	if not args.duplicate:
-		remove_duplicates=False
+	if args.duplicate:
+		remove_duplicates=True
 	
 	#get structures from IRC1
 	structures_irc1,n_atoms_irc1,atoms_irc1=get_xyz(args.irc1)
@@ -243,7 +261,7 @@ def main():
 	if atoms_irc1 == atoms_irc2:
 		pass
 	else:
-		exit('Error: Structures don\'t match between IRCs')
+		sys.exit('Error: Structures don\'t match between IRCs')
 	
 	# Translate all structures according to either center of mass or centroid
 	for i in range(len(structures_irc1)):
@@ -264,16 +282,16 @@ def main():
 		rmsd4=procrustes(structures_irc1[-1], structures_irc2[-1])
 		
 		if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
-			structures_irc1=reverse(structures_irc1)		
+			structures_irc1=reverse_IRC(structures_irc1)		
 			print('Reversed IRC1')
 		elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
 			pass		
-		elif rmsd3 < rmsd1 and rmsd2 < rmsd2 and rmsd3 < rmsd4:
-			structures_irc1=reverse(structures_irc1)
-			structures_irc2=reverse(structures_irc2)
+		elif rmsd3 < rmsd1 and rmsd3 < rmsd2 and rmsd3 < rmsd4:
+			structures_irc1=reverse_IRC(structures_irc1)
+			structures_irc2=reverse_IRC(structures_irc2)
 			print('Reversed IRC1 and IRC2')		
-		elif rmsd4 < rmsd1 and rmsd2 < rmsd2 and rmsd4 < rmsd3:
-			structures_irc2=reverse(structures_irc2)
+		elif rmsd4 < rmsd1 and rmsd4 < rmsd2 and rmsd4 < rmsd3:
+			structures_irc2=reverse_IRC(structures_irc2)
 			print('Reversed IRC2')			
 		else:
 			print('Warning: Was not able to find correct orientation of IRCs, assuming there are correctly aligned!')
@@ -291,7 +309,11 @@ def main():
 		structures_irc2[i]=rotate(structures_irc2[i],rot)
 	
 	# Print one file with translated IRC1 and translated and rotated IRC2 structures
-	output = open(args.irc1[:-4] + '_' + args.irc2[:-4] + '.xyz','w')
+	
+	if args.name:
+		output = open(args.name + '.xyz','w')	
+	else:
+		output = open(args.irc1[:-4] + '_' + args.irc2[:-4] + '.xyz','w')
 
 	#print IRC1
 	count=1
