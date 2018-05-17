@@ -1,8 +1,14 @@
 #!/usr/bin/env python 
-__version__= '0.1.0'
+__version__= '0.2.0'
 
 import numpy as np
 import copy
+
+#Python2 compatibility
+try:
+	range = xrange
+except NameError:
+	pass
 
 #Periodic table
 
@@ -22,7 +28,6 @@ def get_mass(atoms):
 	mass_list =[]
 	for item in atoms:
 		mass_list.append(atomic_mass[periodic_table.index(item)])
-	print(mass_list)
 	mass=sum(mass_list)
 	return mass, mass_list
 
@@ -177,9 +182,9 @@ def procrustes(A, R):
 	return RMSD
 	
 #appends structure to file
-def print_xyz(A, atoms, file):
+def print_xyz(A, atoms, file, title):
 	
-	file.write(str(len(atoms))+ "\n\n")
+	file.write(str(len(atoms))+ "\n"+ title + "\n")
 	for i in range(len(A)):
 		file.write("{0:2s} {1:15.12f} {2:15.12f} {3:15.12f}\n".format(atoms[i], A[i, 0], A[i, 1], A[i, 2]))
 		
@@ -193,37 +198,46 @@ def main():
 	import sys
 	
 	"""
-	Assume same atom count and numbering!
-	Assume right direction of IRCs (make function that reverses IRCs!) 
-	This means the last point of IRC1 is the reference
-	This means the first point of IRC2 is used for calculating the rotational matrix!
-	
-	
-	
 	Arguments:
 	
-    mass weight vs centroid
 	include H or not
-	reverse IRC1 
-	reverse IRC2
 	"""
-	#parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description='description')
-	#args = parser.parse_args()
 	
 	
-	#HARDCODE FOR TESTING
+	#set standard settings
 	
 	center_mode='c'
-	irc1='irc.xyz'
-	irc2='test.xyz'
+	remove_duplicates= False
+	auto_orient = False
 	
 	
+	parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description='description')
+	
+	
+		parser.add_argument('irc1', metavar='IRC_1', type=str, help='IRC1 as .xyz')
+	parser.add_argument('irc2', metavar='IRC_2', type=str, help='IRC2 as .xyz')
+	parser.add_argument('-m', '--mass', action='store_true', help='Mass center', default=False)
+	parser.add_argument('-o', '--orient', action='store_true', help='Auto orient', default=False)
+	parser.add_argument('-d', '--duplicate', action='store_true', help='Remove duplicates', default=False)
+	
+	
+	#actually parses the arguments
+	args = parser.parse_args()
+	
+	if args.mass:
+		center_mode='m'
+		
+	if not args.orient:
+		auto_orient=False
+		
+	if not args.duplicate:
+		remove_duplicates=False
 	
 	#get structures from IRC1
-	structures_irc1,n_atoms_irc1,atoms_irc1=get_xyz(irc1)
+	structures_irc1,n_atoms_irc1,atoms_irc1=get_xyz(args.irc1)
 	
 	#get structures from IRC2
-	structures_irc2,n_atoms_irc2,atoms_irc2=get_xyz(irc2)
+	structures_irc2,n_atoms_irc2,atoms_irc2=get_xyz(args.irc2)
 	
 	#check if IRCs are compatible
 	if atoms_irc1 == atoms_irc2:
@@ -243,51 +257,54 @@ def main():
 	checking all 4 different possibilities	
 	and reversing IRCs if necessary
 	"""
-	
-	rmsd1=procrustes(structures_irc1[0], structures_irc2[0])
-	print('rmsd1=' +  str(rmsd1))
-	rmsd2=procrustes(structures_irc1[-1], structures_irc2[0])
-	print('rmsd2=' +  str(rmsd2))
-	rmsd3=procrustes(structures_irc1[0], structures_irc2[-1])
-	print('rmsd3=' +  str(rmsd3))
-	rmsd4=procrustes(structures_irc1[-1], structures_irc2[-1])
-	print('rmsd4=' +  str(rmsd4))
-	
-	if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
-		structures_irc1=reverse(structures_irc1)		
-		print('Reversed IRC1')
-	elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
-		pass		
-	elif rmsd3 < rmsd1 and rmsd2 < rmsd2 and rmsd3 < rmsd4:
-		structures_irc1=reverse(structures_irc1)
-		structures_irc2=reverse(structures_irc2)
-		print('Reversed IRC1 and IRC2')		
-	elif rmsd4 < rmsd1 and rmsd2 < rmsd2 and rmsd4 < rmsd3:
-		structures_irc2=reverse(structures_irc2)
-		print('Reversed IRC2')			
-	else:
-		print('Warning: Was not able to find correct orientation of IRCs, assuming there are correctly aligned!')
-	
-	# Calculate rotational matrix
+	if auto_orient:
+		rmsd1=procrustes(structures_irc1[0], structures_irc2[0])
+		rmsd2=procrustes(structures_irc1[-1], structures_irc2[0])
+		rmsd3=procrustes(structures_irc1[0], structures_irc2[-1])
+		rmsd4=procrustes(structures_irc1[-1], structures_irc2[-1])
+		
+		if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
+			structures_irc1=reverse(structures_irc1)		
+			print('Reversed IRC1')
+		elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
+			pass		
+		elif rmsd3 < rmsd1 and rmsd2 < rmsd2 and rmsd3 < rmsd4:
+			structures_irc1=reverse(structures_irc1)
+			structures_irc2=reverse(structures_irc2)
+			print('Reversed IRC1 and IRC2')		
+		elif rmsd4 < rmsd1 and rmsd2 < rmsd2 and rmsd4 < rmsd3:
+			structures_irc2=reverse(structures_irc2)
+			print('Reversed IRC2')			
+		else:
+			print('Warning: Was not able to find correct orientation of IRCs, assuming there are correctly aligned!')
+		
+		# Calculate rotational matrix before removing duplicate (since that will provide best rotation
 	rot=find_rotation(structures_irc2[0],structures_irc1[-1])
+	
+	#remove duplicate
+	if remove_duplicates:
+		if procrustes(structures_irc1[-1], structures_irc2[0]) < 1.0e-9:
+			structures_irc2=structures_irc2[1:]
 	
 	# Apply rotation to all structures in IRC2
 	for i in range(len(structures_irc2)):
 		structures_irc2[i]=rotate(structures_irc2[i],rot)
 	
 	# Print one file with translated IRC1 and translated and rotated IRC2 structures
-	output = open(irc1 + '_' + irc2 + '.xyz','w')
+	output = open(args.irc1[:-4] + '_' + args.irc2[:-4] + '.xyz','w')
 
 	#print IRC1
+	count=1
 	for i in range(len(structures_irc1)):
-		print_xyz(structures_irc1[i],atoms_irc1, output)
+		print_xyz(structures_irc1[i],atoms_irc1, output, str(count))
+		count +=1
 	#print IRC2
 	for i in range(len(structures_irc2)):
-		print_xyz(structures_irc2[i],atoms_irc2, output)
+		print_xyz(structures_irc2[i],atoms_irc2, output, str(count))
+		count +=1
 	#close file
 	output.close
 		
-	
 	return
 
 
