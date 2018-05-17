@@ -35,10 +35,21 @@ IRC_2 is the second multiple structure \*.xyz file, structures will be aligned t
 
 Options:
 
--n Name   allows to specify the output name, otherwise a name will be created from the input file names
--o        requests automatical orientation of the sets of structures by reversing the order if needed
--d        removes duplicate at the intersection between sets
--m        uses center of mass rather than centroid for centering structures
+-n Name   
+
+allows to specify the output name, otherwise a name will be created from the input file names
+
+-o        
+
+requests automatical orientation of the sets of structures by reversing the order if needed
+
+-d        
+
+removes duplicate at the intersection between sets
+
+-m        
+
+uses center of mass rather than centroid for centering structures
 
 ## Limitations
 
@@ -48,7 +59,9 @@ All structures must have the same atoms in the same order.
 ## To-Do
 
 Ignore hydrogens during alignment.
+
 Ignore custom atoms during alignment.
+
 Allow for more than one alignment at a time.
 
 ## Contact
@@ -62,5 +75,6 @@ dennis.svatunek@gmail.com
 https://github.com/dsvatunek/IRCalign
 
 _____________________________
+
 
 License: [CC-BY](https://creativecommons.org/licenses/by/3.0/)
