@@ -3,6 +3,8 @@ __version__= '0.3.0'
 
 __doc__="""
 Documentation
+
+NEED TO BE IN CORRECT ORDER!
 """
 
 import numpy as np
@@ -245,83 +247,90 @@ def main():
 	
 	if args.mass:
 		center_mode='m'
+
 	
-	#get structures from IRC1
+	
+	#get structures from IRC1, this is the reference.
 	structures_irc1,n_atoms_irc1,atoms_irc1,title_irc1=get_xyz(args.irc1)
 	
-	#get structures from IRC2
-	structures_irc2,n_atoms_irc2,atoms_irc2,title_irc2=get_xyz(args.irc2[0])
-	
-	#check if IRCs are compatible
-	if atoms_irc1 == atoms_irc2:
-		pass
-	else:
-		sys.exit('Error: Structures don\'t match between IRCs')
-	
-	# Translate all structures according to either center of mass or centroid
+	#center IRC1
 	for i in range(len(structures_irc1)):
 		structures_irc1[i]=center_xyz(structures_irc1[i], atoms_irc1, center_mode)
 	
-	for i in range(len(structures_irc2)):
-		structures_irc2[i]=center_xyz(structures_irc2[i], atoms_irc1, center_mode)
-		
-	""" 
-	find out orientation of IRCs automatically by
-	checking all 4 different possibilities	
-	and reversing IRCs if necessary
-	"""
-	if args.orient:
-		rmsd1=procrustes(structures_irc1[0], structures_irc2[0])
-		rmsd2=procrustes(structures_irc1[-1], structures_irc2[0])
-		rmsd3=procrustes(structures_irc1[0], structures_irc2[-1])
-		rmsd4=procrustes(structures_irc1[-1], structures_irc2[-1])
-		
-		if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
-			structures_irc1=reverse_IRC(structures_irc1)		
-			print('Reversed IRC1')
-		elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
-			pass		
-		elif rmsd3 < rmsd1 and rmsd3 < rmsd2 and rmsd3 < rmsd4:
-			structures_irc1=reverse_IRC(structures_irc1)
-			structures_irc2=reverse_IRC(structures_irc2)
-			print('Reversed IRC1 and IRC2')		
-		elif rmsd4 < rmsd1 and rmsd4 < rmsd2 and rmsd4 < rmsd3:
-			structures_irc2=reverse_IRC(structures_irc2)
-			print('Reversed IRC2')			
+	output_filename=str(args.irc1[:-4])
+	
+	for x in range(len(args.irc2)):
+		#get structures from next
+		structures_irc2,n_atoms_irc2,atoms_irc2,title_irc2=get_xyz(args.irc2[x])
+	
+		#check if IRCs are compatible
+		if atoms_irc1 == atoms_irc2:
+			pass
 		else:
-			print('Warning: Was not able to find correct orientation of IRCs, assuming there are correctly aligned!')
+			sys.exit('Error: Structures don\'t match between IRCs')
+	
+		# Translate all structures according to either center of mass or centroid
+		for i in range(len(structures_irc2)):
+			structures_irc2[i]=center_xyz(structures_irc2[i], atoms_irc1, center_mode)
 		
+		""" 
+		find out orientation of IRCs automatically by
+		checking all 4 different possibilities	
+		and reversing IRCs if necessary
+		"""
+		if args.orient:
+			rmsd1=procrustes(structures_irc1[0], structures_irc2[0])
+			rmsd2=procrustes(structures_irc1[-1], structures_irc2[0])
+			rmsd3=procrustes(structures_irc1[0], structures_irc2[-1])
+			rmsd4=procrustes(structures_irc1[-1], structures_irc2[-1])
+			
+			if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
+				structures_irc1=reverse_IRC(structures_irc1)		
+				print('Reversed IRC1')
+			elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
+				pass		
+			elif rmsd3 < rmsd1 and rmsd3 < rmsd2 and rmsd3 < rmsd4:
+				structures_irc1=reverse_IRC(structures_irc1)
+				structures_irc2=reverse_IRC(structures_irc2)
+				print('Reversed IRC1 and IRC2')		
+			elif rmsd4 < rmsd1 and rmsd4 < rmsd2 and rmsd4 < rmsd3:
+				structures_irc2=reverse_IRC(structures_irc2)
+				print('Reversed IRC2')			
+			else:
+				print('Warning: Was not able to find correct orientation of IRCs, assuming there are correctly aligned!')
+			
 		# Calculate rotational matrix before removing duplicate (since that will provide best rotation
-	rot=find_rotation(structures_irc2[0],structures_irc1[-1])
+		rot=find_rotation(structures_irc2[0],structures_irc1[-1])
 	
-	#remove duplicate
-	if args.duplicate:
-		if procrustes(structures_irc1[-1], structures_irc2[0]) < 1.0e-9:
-			structures_irc2=structures_irc2[1:]
+		#remove duplicate
+		if args.duplicate:
+			if procrustes(structures_irc1[-1], structures_irc2[x]) < 1.0e-9:
+				structures_irc2=structures_irc2[1:]
 	
-	# Apply rotation to all structures in IRC2
-	for i in range(len(structures_irc2)):
-		structures_irc2[i]=rotate(structures_irc2[i],rot)
+		# Apply rotation to all structures in IRC2
+		for i in range(len(structures_irc2)):
+			structures_irc2[i]=rotate(structures_irc2[i],rot)
 	
-	# Print one file with translated IRC1 and translated and rotated IRC2 structures
+		#Update IRC1
+		structures_irc1=structures_irc1+structures_irc2
+		title_irc1=title_irc1+title_irc2
+		
+		#update output filename
+		output_filename=output_filename+'_'+args.irc2[x][:-4]
+
+		
+		
 	
 	if args.name:
 		output = open(args.name + '.xyz','w')	
 	else:
-		output = open(args.irc1[:-4] + '_' + args.irc2[0][:-4] + '.xyz','w')
+		output = open(output_filename + '.xyz','w')	
 
 	#print IRC1
 	count=1
 	for i in range(len(structures_irc1)):
 		if args.title:
 			print_xyz(structures_irc1[i],atoms_irc1, output, title_irc1[i])
-		else:
-			print_xyz(structures_irc1[i],atoms_irc1, output, str(count))
-			count +=1
-	#print IRC2
-	for i in range(len(structures_irc2)):
-		if args.title:
-			print_xyz(structures_irc1[i],atoms_irc1, output, title_irc2[i])
 		else:
 			print_xyz(structures_irc1[i],atoms_irc1, output, str(count))
 			count +=1
