@@ -38,8 +38,8 @@ def get_mass(atoms):
 
 #function to get xyz coordinates and atom list out of *.log or *.xyz files, right now only xyz
 def get_xyz(file):
-	structures,n_atoms,atoms=xyz_from_xyz(file)
-	return structures, n_atoms, atoms
+	structures,n_atoms,atoms,title=xyz_from_xyz(file)
+	return structures, n_atoms, atoms, title
 
 #checks if a string contains only an integer
 def isInt(s):
@@ -54,6 +54,7 @@ def xyz_from_xyz(file):
 	n_atoms = 0
 	atoms = []
 	structures = []
+	title = []
 	file_object = open(file, 'r')
 	input = (line for line in file_object) #make generator
 	#search for number of atoms
@@ -65,7 +66,7 @@ def xyz_from_xyz(file):
 		sys.exit('Error: No xyz coordinates found in file: ' + file)
 			
 	#skip one line
-	next(input)
+	title.append(next(input).strip())
 	
 	# now there should be n_atoms lines of coordinates WHAT IF NOT???
 	for i in range(n_atoms):
@@ -92,7 +93,7 @@ def xyz_from_xyz(file):
 		try:
 			if int(line.strip()) == n_atoms:
 				#read one line to skip title
-				next(input)
+				title.append(next(input).strip())
 				
 				# now there should be n_atoms lines of coordinates WHAT IF NOT???
 				for i in range(n_atoms):
@@ -108,7 +109,7 @@ def xyz_from_xyz(file):
 		except ValueError:
 			pass
 				
-	return structures, n_atoms, atoms
+	return structures, n_atoms, atoms, title
 	
 #function to reverse order of IRC, takes list of numpy arrays and reverses them
 def reverse_IRC(list):
@@ -221,8 +222,6 @@ def main():
 	
 	
 	center_mode='c'
-	remove_duplicates= False
-	auto_orient = False
 	
 	
 	parser =  argparse.ArgumentParser(usage='%(prog)s [options] IRC_1 IRC_2',  description=description, epilog=epilog)
@@ -233,7 +232,8 @@ def main():
 	parser.add_argument('-m', '--mass', action='store_true', help='Mass center', default=False)
 	parser.add_argument('-o', '--orient', action='store_true', help='Auto orient', default=False)
 	parser.add_argument('-d', '--duplicate', action='store_true', help='Remove duplicates', default=False)
-	parser.add_argument('-n', '--name', type=str, help='Specify output filename', default=False)
+	parser.add_argument('-n', '--name', type=str, help='Specify output filename', default=False)	
+	parser.add_argument('-t', '--title', action='store_true', help='Keep title', default=False)
 	
 	
 	if len(sys.argv) == 1:
@@ -245,18 +245,12 @@ def main():
 	
 	if args.mass:
 		center_mode='m'
-		
-	if args.orient:
-		auto_orient=True
-		
-	if args.duplicate:
-		remove_duplicates=True
 	
 	#get structures from IRC1
-	structures_irc1,n_atoms_irc1,atoms_irc1=get_xyz(args.irc1)
+	structures_irc1,n_atoms_irc1,atoms_irc1,title_irc1=get_xyz(args.irc1)
 	
 	#get structures from IRC2
-	structures_irc2,n_atoms_irc2,atoms_irc2=get_xyz(args.irc2[0])
+	structures_irc2,n_atoms_irc2,atoms_irc2,title_irc2=get_xyz(args.irc2[0])
 	
 	#check if IRCs are compatible
 	if atoms_irc1 == atoms_irc2:
@@ -276,7 +270,7 @@ def main():
 	checking all 4 different possibilities	
 	and reversing IRCs if necessary
 	"""
-	if auto_orient:
+	if args.orient:
 		rmsd1=procrustes(structures_irc1[0], structures_irc2[0])
 		rmsd2=procrustes(structures_irc1[-1], structures_irc2[0])
 		rmsd3=procrustes(structures_irc1[0], structures_irc2[-1])
@@ -301,7 +295,7 @@ def main():
 	rot=find_rotation(structures_irc2[0],structures_irc1[-1])
 	
 	#remove duplicate
-	if remove_duplicates:
+	if args.duplicate:
 		if procrustes(structures_irc1[-1], structures_irc2[0]) < 1.0e-9:
 			structures_irc2=structures_irc2[1:]
 	
@@ -319,12 +313,18 @@ def main():
 	#print IRC1
 	count=1
 	for i in range(len(structures_irc1)):
-		print_xyz(structures_irc1[i],atoms_irc1, output, str(count))
-		count +=1
+		if args.title:
+			print_xyz(structures_irc1[i],atoms_irc1, output, title_irc1[i])
+		else:
+			print_xyz(structures_irc1[i],atoms_irc1, output, str(count))
+			count +=1
 	#print IRC2
 	for i in range(len(structures_irc2)):
-		print_xyz(structures_irc2[i],atoms_irc2, output, str(count))
-		count +=1
+		if args.title:
+			print_xyz(structures_irc1[i],atoms_irc1, output, title_irc2[i])
+		else:
+			print_xyz(structures_irc1[i],atoms_irc1, output, str(count))
+			count +=1
 	#close file
 	output.close
 		
