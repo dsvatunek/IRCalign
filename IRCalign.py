@@ -204,7 +204,10 @@ def main():
 	
 	import argparse
 	import sys
+	import datetime
+	import time
 	
+	starttime=time.time()
 	"""
 	Arguments:
 	
@@ -336,7 +339,11 @@ def main():
 			count +=1
 	#close file
 	output.close
-		
+	
+	endtime=time.time()
+	totaltime=endtime-starttime
+	output.write('Finished after '+"{:0>15}".format(str(datetime.timedelta(seconds=totaltime)))+'\n')
+	
 	return
 
 
