@@ -341,8 +341,13 @@ def main():
 	output.close
 	
 	endtime=time.time()
-	totaltime=endtime-starttime
-	output.write('Finished after '+"{:0>15}".format(str(datetime.timedelta(seconds=totaltime)))+'\n')
+	totaltime=str(endtime-starttime)
+	print(totaltime)
+	seconds=totaltime.split('.')[0]
+	print(seconds)
+	milliseconds=float('0.'+totaltime.split('.')[1])*1000
+	print(milliseconds)
+	print('Finished after {} seconds and {:.0f} ms'.format(seconds, float(milliseconds)))
 	
 	return
 
