@@ -289,7 +289,7 @@ def main():
 			
 			if rmsd1 < rmsd2 and rmsd1 < rmsd3 and rmsd1 < rmsd4:
 				structures_irc1=reverse_IRC(structures_irc1)
-				title_irc1=title_irc1.reverse()
+				title_irc1.reverse()
 				print('Reversed IRC1')
 			elif rmsd2 < rmsd1 and rmsd2 < rmsd3 and rmsd2 < rmsd4:
 				pass		
@@ -297,12 +297,12 @@ def main():
 				structures_irc1=reverse_IRC(structures_irc1)
 				structures_irc2=reverse_IRC(structures_irc2)
 				print('Reversed IRC1 and IRC2')
-				title_irc1=title_irc1.reverse()
-				title_irc2=title_irc2.reverse()
+				title_irc1.reverse()
+				title_irc2.reverse()
 			elif rmsd4 < rmsd1 and rmsd4 < rmsd2 and rmsd4 < rmsd3:
 				structures_irc2=reverse_IRC(structures_irc2)
 				print('Reversed IRC2')
-				title_irc2=title_irc2.reverse()
+				title_irc2.reverse()
 			else:
 				print('Warning: Was not able to find correct orientation of IRCs, assuming there are correctly aligned!')
 			
